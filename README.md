@@ -385,7 +385,7 @@ grpcurl -plaintext \
 - Type-safe gRPC communication
 - Schema-driven GraphQL
 
-## Files Generated
+## Files
 
 - **6 microservices** as separate Maven modules
 - **gRPC proto definitions** for type-safe communication
