@@ -340,23 +340,23 @@ grpcurl -plaintext \
 
 ## Key Features Demonstrated
 
-✅ **Microservice Communication Patterns:**
+ **Microservice Communication Patterns:**
 - Synchronous REST calls (Expense → Category)
 - Asynchronous Kafka events (Income/Expense → Dashboard)
 - gRPC for high-performance calls (Budget → AI Recommendation)
 - GraphQL for flexible querying
 
-✅ **Event-Driven Architecture:**
+**Event-Driven Architecture:**
 - Kafka topics for `income-events` and `expense-events`
 - Event publishing and consuming
 - Real-time data aggregation
 
-✅ **Database Layer:**
+**Database Layer:**
 - Spring Data JPA
 - H2 in-memory database (easily switchable to MySQL)
 - Automatic schema generation
 
-✅ **API Documentation:**
+**API Documentation:**
 - RESTful endpoints with request/response examples
 - GraphQL schema with resolvers
 - gRPC proto definitions
@@ -418,15 +418,6 @@ grpcurl -plaintext \
 - [gRPC Java Guide](https://grpc.io/docs/languages/java/)
 - [Spring GraphQL Documentation](https://spring.io/projects/spring-graphql)
 - [Microservices Patterns](https://microservices.io/)
-
-## Academic Use
-
-This project is designed for educational purposes to demonstrate:
-- Microservice architecture principles
-- Multiple communication technologies
-- Event-driven systems
-- Distributed system design
-- API design patterns (REST, gRPC, GraphQL)
 
 ## Author
 
