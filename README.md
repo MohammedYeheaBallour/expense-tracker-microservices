@@ -430,12 +430,6 @@ This project is designed for educational purposes to demonstrate:
 
 ## Author
 
-Created as part of Advanced Software Engineering coursework.
+Created by Mohammed Yehea Ballour
 
-## License
 
-Academic use only.
-
----
-
-**Last Updated:** April 2024
