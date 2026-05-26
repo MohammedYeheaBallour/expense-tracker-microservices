@@ -1,0 +1,8 @@
+com\expensetracker\expense\client\CategoryServiceClient.class
+com\expensetracker\expense\service\ExpenseService.class
+com\expensetracker\expense\controller\ExpenseController.class
+com\expensetracker\expense\ExpenseServiceApplication.class
+com\expensetracker\expense\config\KafkaConfig.class
+com\expensetracker\expense\entity\Expense.class
+com\expensetracker\expense\repository\ExpenseRepository.class
+com\expensetracker\expense\event\ExpenseEvent.class

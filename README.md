@@ -1,441 +1,483 @@
-# Expense Tracker Microservices System
-
-## Overview
-
-This is an academic project demonstrating a microservices architecture for an Expense Tracker system. It implements multiple communication patterns including REST APIs, Kafka event streaming, gRPC, and GraphQL.
-
-**Course:** Advanced Software Engineering (Chapter 5: Implementing Microservice Communication)
-
-## Architecture
-
-### Microservices
-
-1. **Income Service** (Port 8001)
-   - Manages income records
-   - REST API: CRUD operations for income
-   - Publishes `IncomeCreated` events to Kafka
-
-2. **Expense Service** (Port 8002)
-   - Manages expense records
-   - REST API: CRUD operations for expenses
-   - Calls Category Service (REST) for validation
-   - Publishes `ExpenseAdded` events to Kafka
-
-3. **Category Service** (Port 8003)
-   - Manages predefined categories
-   - REST API: List and validate categories
-   - No dependencies on other services
-
-4. **Budget Service** (Port 8004)
-   - Manages monthly budgets per user
-   - REST API: CRUD for budgets
-   - Calls AI Recommendation Service via gRPC
-
-5. **AI Recommendation Service** (Port 8005)
-   - Provides spending recommendations
-   - gRPC service (port 9005)
-   - Receives budget data and returns advice
-
-6. **Dashboard Service** (Port 8006)
-   - Provides combined financial overview
-   - GraphQL API for flexible querying
-   - Subscribes to Income and Expense events from Kafka
-   - Aggregates data in-memory for demo purposes
-
-### Communication Patterns
-
-```
-REST (Synchronous):
-  Expense Service → Category Service
-  Dashboard Service → Other Services (for initial data)
-
-Kafka (Asynchronous Event Streaming):
-  Income Service → IncomeCreated events
-  Expense Service → ExpenseAdded events
-  Dashboard Service ← Subscribe to events
-
-gRPC (High-Performance RPC):
-  Budget Service → AI Recommendation Service (port 9005)
-
-GraphQL (Flexible Querying):
-  Dashboard Service → GraphQL endpoint for clients
-```
-
-## Project Structure
-
-```
-expense-tracker-system/
-├── pom.xml                          # Parent POM
-├── README.md                        # This file
-├── docker-compose.yml               # Kafka/Zookeeper setup
-│
-├── income-service/
-│   ├── pom.xml
-│   ├── src/main/java/com/expensetracker/income/
-│   │   ├── IncomeServiceApplication.java
-│   │   ├── entity/Income.java
-│   │   ├── repository/IncomeRepository.java
-│   │   ├── service/IncomeService.java
-│   │   ├── controller/IncomeController.java
-│   │   └── event/IncomeEvent.java
-│   └── src/main/resources/application.yml
-│
-├── expense-service/
-│   ├── pom.xml
-│   ├── src/main/java/com/expensetracker/expense/
-│   │   ├── ExpenseServiceApplication.java
-│   │   ├── entity/Expense.java
-│   │   ├── repository/ExpenseRepository.java
-│   │   ├── service/ExpenseService.java
-│   │   ├── controller/ExpenseController.java
-│   │   ├── client/CategoryServiceClient.java
-│   │   ├── event/ExpenseEvent.java
-│   │   └── config/KafkaConfig.java
-│   └── src/main/resources/application.yml
-│
-├── category-service/
-│   ├── pom.xml
-│   ├── src/main/java/com/expensetracker/category/
-│   │   ├── CategoryServiceApplication.java
-│   │   ├── entity/Category.java
-│   │   ├── repository/CategoryRepository.java
-│   │   ├── service/CategoryService.java
-│   │   └── controller/CategoryController.java
-│   └── src/main/resources/application.yml
-│
-├── budget-service/
-│   ├── pom.xml
-│   ├── src/main/java/com/expensetracker/budget/
-│   │   ├── BudgetServiceApplication.java
-│   │   ├── entity/Budget.java
-│   │   ├── repository/BudgetRepository.java
-│   │   ├── service/BudgetService.java
-│   │   ├── controller/BudgetController.java
-│   │   └── grpc/AIRecommendationClient.java
-│   ├── src/main/proto/
-│   │   └── ai_recommendation.proto
-│   └── src/main/resources/application.yml
-│
-├── ai-recommendation-service/
-│   ├── pom.xml
-│   ├── src/main/java/com/expensetracker/airecommendation/
-│   │   ├── AIRecommendationServiceApplication.java
-│   │   ├── grpc/AIRecommendationGrpcService.java
-│   │   └── service/RecommendationService.java
-│   ├── src/main/proto/
-│   │   └── ai_recommendation.proto
-│   └── src/main/resources/application.yml
-│
-└── dashboard-service/
-    ├── pom.xml
-    ├── src/main/java/com/expensetracker/dashboard/
-    │   ├── DashboardServiceApplication.java
-    │   ├── graphql/
-    │   │   ├── DashboardResolver.java
-    │   │   └── DashboardDTO.java
-    │   ├── service/DashboardService.java
-    │   ├── listener/
-    │   │   ├── IncomeEventListener.java
-    │   │   └── ExpenseEventListener.java
-    │   └── config/KafkaConfig.java
-    ├── src/main/resources/
-    │   ├── graphql/
-    │   │   └── schema.graphqls
-    │   └── application.yml
-    └── README_GraphQL.md
-```
-
-## Prerequisites
-
-- **Java 17** or higher
-- **Maven 3.8.0** or higher
-- **Docker** and **Docker Compose** (for running Kafka)
-- **Git**
-
-## Quick Start
-
-### 1. Start Kafka (Prerequisites for Event Streaming)
-
-```bash
-# Navigate to project root
-cd expense-tracker-system
-
-# Start Kafka and Zookeeper using Docker Compose
-docker-compose up -d
-```
-
-This starts:
-- Kafka broker on `localhost:9092`
-- Zookeeper on `localhost:2181`
-
-### 2. Build All Services
-
-```bash
-# From project root
-mvn clean install -DskipTests
-```
-
-### 3. Run Services (in separate terminal windows/tabs)
-
-**Terminal 1 - Income Service:**
-```bash
-cd income-service
-mvn spring-boot:run
-# Service running on http://localhost:8001
-```
-
-**Terminal 2 - Category Service:**
-```bash
-cd category-service
-mvn spring-boot:run
-# Service running on http://localhost:8003
-```
-
-**Terminal 3 - Expense Service:**
-```bash
-cd expense-service
-mvn spring-boot:run
-# Service running on http://localhost:8002
-# Depends on Category Service for validation
-```
-
-**Terminal 4 - Budget Service:**
-```bash
-cd budget-service
-mvn spring-boot:run
-# Service running on http://localhost:8004
-# gRPC port: 9004
-```
-
-**Terminal 5 - AI Recommendation Service:**
-```bash
-cd ai-recommendation-service
-mvn spring-boot:run
-# Service running on http://localhost:8005
-# gRPC port: 9005
-```
-
-**Terminal 6 - Dashboard Service:**
-```bash
-cd dashboard-service
-mvn spring-boot:run
-# Service running on http://localhost:8006
-# GraphQL endpoint: http://localhost:8006/graphql
-```
-
-## Testing Endpoints
-
-### 1. REST APIs
-
-#### Category Service
-
-```bash
-# Create a category
-curl -X POST http://localhost:8003/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Food","description":"Food and dining"}'
-
-# List categories
-curl http://localhost:8003/api/categories
-
-# Validate category
-curl http://localhost:8003/api/categories/validate/Food
-```
-
-#### Income Service
-
-```bash
-# Create income
-curl -X POST http://localhost:8001/api/incomes \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"user123","amount":5000,"source":"Salary","date":"2024-04-29"}'
-
-# Get all incomes
-curl http://localhost:8001/api/incomes
-
-# Get income by user
-curl http://localhost:8001/api/incomes/user/user123
-```
-
-#### Expense Service
-
-```bash
-# Create expense
-curl -X POST http://localhost:8002/api/expenses \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"user123","amount":50,"category":"Food","date":"2024-04-29","note":"Lunch"}'
-
-# Get all expenses
-curl http://localhost:8002/api/expenses
-
-# Get expenses by user
-curl http://localhost:8002/api/expenses/user/user123
-```
-
-#### Budget Service
-
-```bash
-# Create budget
-curl -X POST http://localhost:8004/api/budgets \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"user123","month":"2024-04","totalLimit":2000}'
-
-# Get all budgets
-curl http://localhost:8004/api/budgets
-
-# Get budget by user and month
-curl http://localhost:8004/api/budgets/user/user123/month/2024-04
-```
-
-### 2. GraphQL Queries
-
-Access GraphQL playground: http://localhost:8006/graphql
-
-```graphql
-# Get financial overview for a user
-query {
-  financialOverview(userId: "user123", month: "2024-04") {
-    userId
-    month
-    totalIncome
-    totalExpenses
-    monthlyBudget
-    remainingBudget
-    expensesByCategory {
-      category
-      amount
-    }
-    incomesBySource {
-      source
-      amount
-    }
-  }
-}
-
-# Get summary
-query {
-  summary(userId: "user123") {
-    totalIncome
-    totalExpenses
-    netBalance
-  }
-}
-```
-
-### 3. gRPC Testing
-
-Use `grpcurl` to test gRPC endpoints:
-
-```bash
-# Install grpcurl if not already installed
-# brew install grpcurl (macOS)
-# or download from https://github.com/fullstorydev/grpcurl/releases
-
-# Get recommendation (Budget Service → AI Recommendation Service)
-grpcurl -plaintext \
-  -d '{"userId":"user123","monthlyBudget":2000,"currentExpenses":1500}' \
-  localhost:9005 \
-  com.expensetracker.AIRecommendation/GetRecommendation
-```
-
-## Key Features Demonstrated
-
-✅ **Microservice Communication Patterns:**
-- Synchronous REST calls (Expense → Category)
-- Asynchronous Kafka events (Income/Expense → Dashboard)
-- gRPC for high-performance calls (Budget → AI Recommendation)
-- GraphQL for flexible querying
-
-✅ **Event-Driven Architecture:**
-- Kafka topics for `income-events` and `expense-events`
-- Event publishing and consuming
-- Real-time data aggregation
-
-✅ **Database Layer:**
-- Spring Data JPA
-- H2 in-memory database (easily switchable to MySQL)
-- Automatic schema generation
-
-✅ **API Documentation:**
-- RESTful endpoints with request/response examples
-- GraphQL schema with resolvers
-- gRPC proto definitions
-
-## Implementation Notes
-
-1. **In-Memory Event Processing:** Dashboard Service stores data in memory for simplicity. In production, use a distributed cache or database.
-
-2. **Security:** This project does not include security (authentication/authorization) for simplicity. Add Spring Security in production.
-
-3. **Circuit Breakers:** Consider adding Resilience4j for fault tolerance in production.
-
-4. **Service Discovery:** Uses hard-coded URLs. In production, use Eureka or Kubernetes service discovery.
-
-5. **Logging & Monitoring:** Add Spring Boot Actuator, Prometheus, and Grafana for monitoring.
-
-6. **Configuration:** Uses application.yml. Extend with Spring Cloud Config Server for centralized configuration.
-
-## Code Quality
-
-- Clean architecture with separation of concerns
-- Entity, Repository, Service, Controller layers
-- Dependency injection via Spring
-- RESTful API design
-- Event-driven patterns
-- Type-safe gRPC communication
-- Schema-driven GraphQL
-
-## Files Generated
-
-- **6 microservices** as separate Maven modules
-- **gRPC proto definitions** for type-safe communication
-- **GraphQL schema** for flexible querying
-- **Kafka configuration** for event streaming
-- **Docker Compose** for infrastructure
-- **Example REST, gRPC, and GraphQL requests**
-
-## Troubleshooting
-
-**Kafka Connection Issues:**
-- Ensure Docker containers are running: `docker ps`
-- Check Kafka connectivity: `docker logs <kafka-container-id>`
-
-**Service Port Conflicts:**
-- Change ports in `application.yml` of each service
-
-**Build Failures:**
-- Ensure Java 17+ is installed: `java -version`
-- Clean Maven cache: `mvn clean`
-
-**gRPC Issues:**
-- Verify gRPC port (9005) is accessible
-- Check protocol: gRPC uses HTTP/2
-
-## References
-
-- [Spring Boot 3.x Documentation](https://spring.io/projects/spring-boot)
-- [Apache Kafka Documentation](https://kafka.apache.org/)
-- [gRPC Java Guide](https://grpc.io/docs/languages/java/)
-- [Spring GraphQL Documentation](https://spring.io/projects/spring-graphql)
-- [Microservices Patterns](https://microservices.io/)
-
-## Academic Use
-
-This project is designed for educational purposes to demonstrate:
-- Microservice architecture principles
-- Multiple communication technologies
-- Event-driven systems
-- Distributed system design
-- API design patterns (REST, gRPC, GraphQL)
-
-## Author
-
-Created as part of Advanced Software Engineering coursework.
-
-## License
-
-Academic use only.
+# نظام تتبع النفقات - Expense Tracker Microservices System
+
+## 🎯 ملخص المشروع
+
+نظام متقدم لإدارة وتتبع النفقات والدخل مبني على **معمارية الخدمات الدقيقة (Microservices)** يدمج 4 تقنيات اتصال مختلفة:
+- **REST APIs** (الاتصال المتزامن البسيط)
+- **Kafka Event Streaming** (المراسلة غير المتزامنة)
+- **gRPC** (الاتصال عالي الأداء)
+- **GraphQL** (الاستعلام المرن عن البيانات)
+
+**الحالة:** ✅ **مكتمل وجاهز للنشر**  
+**الفئة المستهدفة:** طلاب الهندسة البرمجية - Advanced Software Engineering  
+**المستوى:** مشروع أكاديمي متقدم
 
 ---
 
-**Last Updated:** April 2024
+
+
+
+## 🏗️ المعمارية النظام
+
+### الخدمات الدقيقة (Microservices)
+
+```
+┌─────────────────────────────────────────────────┐
+│            تطبيقات العملاء                        │
+│     (Web, Mobile, Desktop)                      │
+└──────────────────┬──────────────────────────────┘
+                   │
+    ┌──────────────┴──────────────┐
+    │                             │
+    ▼                             ▼
+┌────────────────────┐    ┌──────────────────────┐
+│   خدمة الإدارة     │    │  Dashboard Service   │
+│   (REST APIs)      │    │  (GraphQL)           │
+└─────────┬──────────┘    └──────────────────────┘
+          │                        │
+    ┌─────┼─────┬────────┐        │
+    │     │     │        │        │
+    ▼     ▼     ▼        ▼        ▼
+  Income Expense Category Budget  AI Service
+  (8001) (8002) (8003)   (8004)  (9005 gRPC)
+    
+    └──────────────────────────────────┬─────────────┘
+                 │
+        ┌────────▼──────────┐
+        │  Kafka Broker +   │
+        │  Zookeeper        │
+        │  (Docker)         │
+        └─────────┬─────────┘
+                 │
+        ┌────────▼──────────┐
+        │  Databases        │
+        │  (H2 / MySQL)     │
+        └───────────────────┘
+```
+
+### الخدمات الستة:
+
+#### 1️⃣ **Income Service** (منفذ 8001)
+- **الوظيفة:** إدارة سجلات الدخل
+- **الاتصال:** 
+  - REST API للعمليات الكاملة
+  - ينشر أحداث `IncomeCreated` إلى Kafka
+- **الـ API:**
+  - `POST /api/incomes` - إضافة دخل جديد
+  - `GET /api/incomes` - عرض جميع السجلات
+  - `GET /api/incomes/{id}` - عرض سجل معين
+  - `PUT /api/incomes/{id}` - تعديل سجل
+  - `DELETE /api/incomes/{id}` - حذف سجل
+
+#### 2️⃣ **Expense Service** (منفذ 8002)
+- **الوظيفة:** إدارة سجلات النفقات
+- **الاتصال:**
+  - REST API للعمليات الكاملة
+  - استدعاء REST إلى Category Service للتحقق من الفئات
+  - ينشر أحداث `ExpenseAdded` إلى Kafka
+- **الـ API:**
+  - `POST /api/expenses` - إضافة نفقة جديدة
+  - `GET /api/expenses` - عرض جميع النفقات
+  - `GET /api/expenses/{id}` - عرض نفقة معينة
+  - `PUT /api/expenses/{id}` - تعديل نفقة
+  - `DELETE /api/expenses/{id}` - حذف نفقة
+
+#### 3️⃣ **Category Service** (منفذ 8003)
+- **الوظيفة:** إدارة الفئات المحددة مسبقاً
+- **الاتصال:**
+  - REST API فقط
+  - بدون اعتماديات على خدمات أخرى
+- **الـ API:**
+  - `POST /api/categories` - إنشاء فئة جديدة
+  - `GET /api/categories` - عرض جميع الفئات
+  - `GET /api/categories/validate/{name}` - التحقق من صحة الفئة
+
+#### 4️⃣ **Budget Service** (منفذ 8004)
+- **الوظيفة:** إدارة الميزانيات الشهرية
+- **الاتصال:**
+  - REST API للعمليات الكاملة
+  - استدعاء gRPC إلى AI Service للحصول على التوصيات
+- **الـ API:**
+  - `POST /api/budgets` - إضافة ميزانية جديدة
+  - `GET /api/budgets` - عرض جميع الميزانيات
+  - `GET /api/budgets/{id}` - عرض ميزانية معينة
+
+#### 5️⃣ **AI Recommendation Service** (منفذ 9005 - gRPC)
+- **الوظيفة:** توفير توصيات للإنفاق
+- **الاتصال:**
+  - gRPC Server فقط (بدون REST)
+  - تحليل بيانات الميزانية والنفقات
+- **الخدمة:**
+  - `GetRecommendation` - تحليل الإنفاق وإعطاء نصائح
+  - حساب نسبة الإنفاق
+  - تحديد حالة الميزانية
+
+#### 6️⃣ **Dashboard Service** (منفذ 8006)
+- **الوظيفة:** لوحة تحكم موحدة للبيانات المالية
+- **الاتصال:**
+  - GraphQL API للاستعلامات المرنة
+  - مستمع Kafka لأحداث الدخل والنفقات
+- **الاستعلامات:**
+  - `financialOverview(userId, month)` - نظرة عامة كاملة
+  - `summary(userId)` - ملخص شامل
+
+---
+
+## 💻 المتطلبات الأساسية
+
+```bash
+# المتطلبات الإلزامية:
+✓ Java 17 أو أحدث
+✓ Maven 3.8.0 أو أحدث
+✓ Docker و Docker Compose
+✓ Git
+✓ cURL (للاختبار)
+```
+
+### التحقق من التثبيت:
+```bash
+java -version          # يجب أن يظهر Java 17+
+mvn -version           # يجب أن يظهر Maven 3.8+
+docker --version       # يجب أن يظهر إصدار Docker
+docker-compose --version
+```
+
+---
+
+## 🚀 خطوات التشغيل السريع
+
+### الخطوة 1: إعداد المشروع
+
+```bash
+# الانتقال إلى مجلد المشروع
+cd expense-tracker-system
+
+# أو استنساخ من GitHub (عند توفره)
+git clone <repository-url>
+cd expense-tracker-system
+```
+
+### الخطوة 2: تشغيل البنية التحتية (Kafka)
+
+```bash
+# تشغيل Kafka و Zookeeper
+docker-compose up -d
+
+# التحقق من أن الحاويات تعمل
+docker ps
+
+# الاطلاع على السجلات (اختياري)
+docker-compose logs -f
+```
+
+### الخطوة 3: بناء جميع الخدمات
+
+```bash
+# من جذر المشروع
+mvn clean install -DskipTests
+
+# هذا سيقوم بـ:
+# - ترجمة جميع 6 خدمات
+# - توليد كود gRPC
+# - إنشاء ملفات JAR
+```
+
+**مدة البناء:** 3-5 دقائق (حسب سرعة الإنترنت)
+
+### الخطوة 4: تشغيل الخدمات
+
+في محطات طرفية منفصلة، شغل كل خدمة:
+
+```bash
+# المحطة 1: Category Service (يجب البدء أولاً)
+cd category-service
+mvn spring-boot:run
+
+# المحطة 2: Income Service
+cd income-service
+mvn spring-boot:run
+
+# المحطة 3: Expense Service
+cd expense-service
+mvn spring-boot:run
+
+# المحطة 4: Budget Service
+cd budget-service
+mvn spring-boot:run
+
+# المحطة 5: AI Recommendation Service
+cd ai-recommendation-service
+mvn spring-boot:run
+
+# المحطة 6: Dashboard Service
+cd dashboard-service
+mvn spring-boot:run
+```
+
+### الخطوة 5: اختبار الخدمات
+
+```bash
+# التحقق من أن جميع الخدمات تعمل
+curl http://localhost:8001/api/incomes
+curl http://localhost:8002/api/expenses
+curl http://localhost:8003/api/categories
+curl http://localhost:8004/api/budgets
+curl http://localhost:8006/graphql
+
+# جميع الاستجابات يجب أن تكون JSON أو GraphQL response
+```
+
+---
+
+## 📊 نماذج البيانات
+
+### 1. Income Entity
+```json
+{
+  "id": 1,
+  "userId": "user123",
+  "amount": 5000.00,
+  "source": "الراتب",
+  "date": "2024-05-25",
+  "createdAt": "2024-05-25"
+}
+```
+
+### 2. Expense Entity
+```json
+{
+  "id": 1,
+  "userId": "user123",
+  "amount": 150.00,
+  "category": "طعام",
+  "date": "2024-05-25",
+  "note": "شراء من السوبر ماركت",
+  "createdAt": "2024-05-25"
+}
+```
+
+### 3. Category Entity
+```json
+{
+  "id": 1,
+  "name": "طعام",
+  "description": "نفقات الطعام والمطاعم"
+}
+```
+
+### 4. Budget Entity
+```json
+{
+  "id": 1,
+  "userId": "user123",
+  "month": "2024-05",
+  "totalLimit": 5000.00
+}
+```
+
+---
+
+## 🔌 أمثلة الـ APIs
+
+### مثال كامل: إضافة فئة جديدة
+
+```bash
+curl -X POST http://localhost:8003/api/categories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "طعام",
+    "description": "نفقات الطعام والمطاعم"
+  }'
+```
+
+**الاستجابة:**
+```json
+{
+  "id": 1,
+  "name": "طعام",
+  "description": "نفقات الطعام والمطاعم"
+}
+```
+
+### مثال: إضافة دخل جديد
+
+```bash
+curl -X POST http://localhost:8001/api/incomes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user123",
+    "amount": 5000.00,
+    "source": "الراتب",
+    "date": "2024-05-25"
+  }'
+```
+
+### مثال: إضافة نفقة جديدة
+
+```bash
+curl -X POST http://localhost:8002/api/expenses \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user123",
+    "amount": 150.00,
+    "category": "طعام",
+    "date": "2024-05-25",
+    "note": "شراء من السوبر ماركت"
+  }'
+```
+
+### مثال: استعلام GraphQL
+
+```bash
+curl -X POST http://localhost:8006/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { financialOverview(userId: \"user123\", month: \"2024-05\") { totalIncome totalExpenses categories { name total } } }"
+  }'
+```
+
+---
+
+## 🔄 أنماط الاتصال
+
+### 1. REST (المتزامن)
+**الاستخدام:**
+- Expense Service → Category Service (التحقق من الفئات)
+- بين جميع الخدمات والعملاء المباشرين
+
+**الفوائد:**
+- بسيط وسهل الفهم
+- مناسب للعمليات السريعة
+
+### 2. Kafka (غير المتزامن)
+**الاستخدام:**
+- Income Service → ينشر أحداث الدخل الجديد
+- Expense Service → ينشر أحداث النفقات الجديدة
+- Dashboard Service ← يستمع للأحداث
+
+**الفوائد:**
+- فك الاقتران بين الخدمات
+- معالجة موثوقة للأحداث
+- تحميل عالي من العمليات
+
+### 3. gRPC (عالي الأداء)
+**الاستخدام:**
+- Budget Service → AI Service (الحصول على التوصيات)
+
+**الفوائد:**
+- أداء عالي جداً
+- استهلاك نطاق ترددي منخفض
+- مثالي للعمليات الثقيلة
+
+### 4. GraphQL (الاستعلام المرن)
+**الاستخدام:**
+- Dashboard Service → عرض بيانات مرنة حسب الحاجة
+
+**الفوائد:**
+- طلب البيانات المحددة فقط
+- تقليل استهلاك البيانات
+- واجهة موحدة
+
+---
+
+## 🐳 النشر عبر Docker
+
+### نشر خدمة واحدة:
+
+```bash
+# 1. بناء الصورة
+cd expense-service
+mvn clean package -DskipTests -Dspring-boot.repackage.skip=false
+
+# 2. إنشاء Dockerfile
+# انظر DOCKER_DEPLOYMENT_GUIDE.md
+
+# 3. بناء صورة Docker
+docker build -t expense-tracker-expense-service:1.0.0 .
+
+# 4. تشغيل الحاوية
+docker run -p 8002:8002 \
+  --network expense-tracker-network \
+  -e SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092 \
+  expense-tracker-expense-service:1.0.0
+```
+
+---
+
+---
+
+## ✅ المتطلبات المحققة
+
+### ✓ البنية والتنظيم
+- ✅ مجلد الجذر `expense-tracker-system` مع جميع الخدمات
+- ✅ هيكل Maven مع 6 وحدات خدمة
+- ✅ بناء جميع الخدمات مع `mvn clean install`
+- ✅ توثيق واضح
+
+### ✓ الخدمات الدقيقة
+- ✅ **6 خدمات مستقلة:** Income, Expense, Category, Budget, AI, Dashboard
+- ✅ **4 أنماط اتصال:** REST, Kafka, gRPC, GraphQL
+- ✅ **معالجة الأحداث:** Kafka Event Streaming
+- ✅ **الاستعلام المرن:** GraphQL
+
+### ✓ التقنيات المستخدمة
+- ✅ Spring Boot 3.1.5
+- ✅ JPA/Hibernate
+- ✅ Kafka
+- ✅ gRPC
+- ✅ GraphQL
+- ✅ H2 Database
+- ✅ Maven
+
+---
+
+## 🎓 المعرفة والمهارات المكتسبة
+
+من خلال هذا المشروع، تم التعامل مع:
+
+1. **معمارية الخدمات الدقيقة**
+   - تصميم الأنظمة الموزعة
+   - فصل الخدمات والمسؤوليات
+   - التعامل مع المراحل والتوسع
+
+2. **أنماط الاتصال**
+   - REST API للعمليات المتزامنة
+   - Kafka للعمليات غير المتزامنة
+   - gRPC للأداء العالي
+   - GraphQL للاستعلامات المرنة
+
+3. **Spring Boot و Java**
+   - بناء تطبيقات Spring Boot متقدمة
+   - JPA/Hibernate للوصول للبيانات
+   - المعالجات والخدمات المتقدمة
+   - التكوين والحقن للاعتماديات
+
+4. **معالجة الأحداث**
+   - معمارية الأحداث (Event-Driven)
+   - مستمعات Kafka
+   - التعامل مع التوافقية والموثوقية
+
+5. **Docker والحاويات**
+   - بناء صور Docker
+   - تشغيل الحاويات
+   - التشبيك بين الخدمات
+
+6. **GitHub و CI/CD**
+   - إدارة الإصدارات
+   - GitHub Actions
+   - التكامل والنشر المستمر
+
+---
+
+## 🔗 الموارد الإضافية
+
+- [Spring Boot Documentation](https://spring.io/projects/spring-boot)
+- [Kafka Documentation](https://kafka.apache.org/documentation/)
+- [gRPC Guide](https://grpc.io/docs/)
+- [GraphQL Specification](https://graphql.org/)
+- [Docker Documentation](https://docs.docker.com/)
+
+---
+
+
+

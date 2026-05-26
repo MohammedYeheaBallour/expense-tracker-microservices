@@ -3,16 +3,32 @@ package com.expensetracker.budget.grpc;
 import com.expensetracker.grpc.AIRecommendationGrpc;
 import com.expensetracker.grpc.RecommendationRequest;
 import com.expensetracker.grpc.RecommendationResponse;
-import net.devh.springboot.autoconfigure.grpc.client.GrpcClient;
-import org.springframework.stereotype.Component;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 
-@Component
 public class AIRecommendationClient {
 
-    @GrpcClient("aiRecommendationService")
     private AIRecommendationGrpc.AIRecommendationBlockingStub aiRecommendationStub;
+    private ManagedChannel channel;
+
+    private void init() {
+        if (aiRecommendationStub == null) {
+            try {
+                channel = ManagedChannelBuilder.forAddress("localhost", 9005)
+                        .usePlaintext()
+                        .build();
+                this.aiRecommendationStub = AIRecommendationGrpc.newBlockingStub(channel);
+            } catch (Exception e) {
+                System.err.println("Failed to initialize gRPC client: " + e.getMessage());
+            }
+        }
+    }
 
     public RecommendationResponse getRecommendation(String userId, double monthlyBudget, double currentExpenses) {
+        init();
+        if (aiRecommendationStub == null) {
+            throw new RuntimeException("gRPC client not initialized");
+        }
         RecommendationRequest request = RecommendationRequest.newBuilder()
                 .setUserId(userId)
                 .setMonthlyBudget(monthlyBudget)

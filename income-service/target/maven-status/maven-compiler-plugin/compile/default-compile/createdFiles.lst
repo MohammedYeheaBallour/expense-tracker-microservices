@@ -1,0 +1,7 @@
+com\expensetracker\income\service\IncomeService.class
+com\expensetracker\income\event\IncomeEvent.class
+com\expensetracker\income\config\KafkaConfig.class
+com\expensetracker\income\entity\Income.class
+com\expensetracker\income\IncomeServiceApplication.class
+com\expensetracker\income\controller\IncomeController.class
+com\expensetracker\income\repository\IncomeRepository.class

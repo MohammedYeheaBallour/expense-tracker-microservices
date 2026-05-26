@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: ai-recommendation-service
+
+grpc:
+  server:
+    port: 9005
+
+server:
+  port: 8005
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

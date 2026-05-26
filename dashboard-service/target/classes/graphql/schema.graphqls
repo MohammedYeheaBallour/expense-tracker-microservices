@@ -1,0 +1,31 @@
+type Query {
+    financialOverview(userId: String!, month: String!): FinancialOverview
+    summary(userId: String!): Summary
+}
+
+type FinancialOverview {
+    userId: String!
+    month: String!
+    totalIncome: Float!
+    totalExpenses: Float!
+    monthlyBudget: Float!
+    remainingBudget: Float!
+    expensesByCategory: [CategoryExpense!]!
+    incomesBySource: [SourceIncome!]!
+}
+
+type CategoryExpense {
+    category: String!
+    amount: Float!
+}
+
+type SourceIncome {
+    source: String!
+    amount: Float!
+}
+
+type Summary {
+    totalIncome: Float!
+    totalExpenses: Float!
+    netBalance: Float!
+}

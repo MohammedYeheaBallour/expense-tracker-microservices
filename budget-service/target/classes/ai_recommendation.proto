@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package com.expensetracker;
+
+option java_multiple_files = true;
+option java_package = "com.expensetracker.grpc";
+option java_outer_classname = "AIRecommendationProto";
+
+service AIRecommendation {
+  rpc GetRecommendation (RecommendationRequest) returns (RecommendationResponse) {}
+}
+
+message RecommendationRequest {
+  string user_id = 1;
+  double monthly_budget = 2;
+  double current_expenses = 3;
+}
+
+message RecommendationResponse {
+  string user_id = 1;
+  string advice = 2;
+  double spending_percentage = 3;
+  bool is_within_budget = 4;
+}

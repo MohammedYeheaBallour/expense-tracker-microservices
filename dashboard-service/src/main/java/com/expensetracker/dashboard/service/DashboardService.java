@@ -1,12 +1,9 @@
-package com.expensetracker.dashboard.service;
+package com.expensetracker.dashboard.graphql;
 
-import com.expensetracker.dashboard.graphql.CategoryExpenseDTO;
-import com.expensetracker.dashboard.graphql.DashboardDTO;
-import com.expensetracker.dashboard.graphql.SummaryDTO;
-import com.expensetracker.dashboard.graphql.SourceIncomeDTO;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class DashboardService {
@@ -61,11 +58,11 @@ public class DashboardService {
         Map<String, BigDecimal> incomesBySource = (Map<String, BigDecimal>) data.get("incomesBySource");
 
         List<CategoryExpenseDTO> expenses = expensesByCategory.entrySet().stream()
-                .map(e -> CategoryExpenseDTO.builder().category(e.getKey()).amount(e.getValue()).build())
+                .map(e -> new CategoryExpenseDTO(e.getKey(), e.getValue()))
                 .toList();
 
         List<SourceIncomeDTO> incomes = incomesBySource.entrySet().stream()
-                .map(e -> SourceIncomeDTO.builder().source(e.getKey()).amount(e.getValue()).build())
+                .map(e -> new SourceIncomeDTO(e.getKey(), e.getValue()))
                 .toList();
 
         return DashboardDTO.builder()
@@ -93,11 +90,7 @@ public class DashboardService {
 
         BigDecimal netBalance = totalIncome.subtract(totalExpenses);
 
-        return SummaryDTO.builder()
-                .totalIncome(totalIncome)
-                .totalExpenses(totalExpenses)
-                .netBalance(netBalance)
-                .build();
+        return new SummaryDTO(totalIncome, totalExpenses, netBalance);
     }
 
     private Map<String, Object> initializeUserData() {
@@ -111,5 +104,3 @@ public class DashboardService {
     }
 
 }
-
-import java.util.concurrent.ConcurrentHashMap;

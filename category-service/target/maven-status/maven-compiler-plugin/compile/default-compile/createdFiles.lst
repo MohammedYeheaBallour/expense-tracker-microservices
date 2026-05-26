@@ -1,0 +1,5 @@
+com\expensetracker\category\CategoryServiceApplication.class
+com\expensetracker\category\entity\Category.class
+com\expensetracker\category\service\CategoryService.class
+com\expensetracker\category\repository\CategoryRepository.class
+com\expensetracker\category\controller\CategoryController.class

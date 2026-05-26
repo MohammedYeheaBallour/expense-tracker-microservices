@@ -5,10 +5,10 @@ import com.expensetracker.grpc.RecommendationRequest;
 import com.expensetracker.grpc.RecommendationResponse;
 import com.expensetracker.airecommendation.service.RecommendationService;
 import io.grpc.stub.StreamObserver;
-import net.devh.springboot.autoconfigure.grpc.server.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-@GrpcService
+@Component
 public class AIRecommendationGrpcService extends AIRecommendationGrpc.AIRecommendationImplBase {
 
     @Autowired

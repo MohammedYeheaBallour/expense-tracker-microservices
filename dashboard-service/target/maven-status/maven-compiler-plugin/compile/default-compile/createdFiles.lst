@@ -1,0 +1,10 @@
+com\expensetracker\dashboard\graphql\SummaryDTO.class
+com\expensetracker\dashboard\graphql\DashboardResolver.class
+com\expensetracker\dashboard\graphql\DashboardService.class
+com\expensetracker\dashboard\graphql\SourceIncomeDTO.class
+com\expensetracker\dashboard\DashboardServiceApplication.class
+com\expensetracker\dashboard\graphql\CategoryExpenseDTO.class
+com\expensetracker\dashboard\listener\ExpenseEventListener.class
+com\expensetracker\dashboard\graphql\DashboardDTO$Builder.class
+com\expensetracker\dashboard\listener\IncomeEventListener.class
+com\expensetracker\dashboard\graphql\DashboardDTO.class
